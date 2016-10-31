@@ -7,10 +7,7 @@ function table.size(t)
 end
 
 function table.is_empty(t)
-	for _ in pairs(t) do
-		return false
-	end
-	return true
+	return not next(t) -- just cleaner than the other way
 end
 
 function table.equals(a, b)
@@ -33,7 +30,7 @@ function table.equals(a, b)
 end
 
 function table.remove_by_pred(tbl, pred)
-	for i = 1, #tbl do
+	for i = #tbl, 1, -1 do -- if you run through the table forwards, removing an element will cause you to skip the next element due to renumbering
 		if pred(tbl[i]) then
 			return table.remove(tbl, i)
 		end
