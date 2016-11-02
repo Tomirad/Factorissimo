@@ -1,3 +1,4 @@
+require("prototypes.category")
 require("prototypes.entity.factory")
 require("prototypes.entity.utility")
 require("prototypes.item")

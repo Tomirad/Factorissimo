@@ -6,9 +6,15 @@ require 'helpers/factory-gui-helper'
 local dirs = defines.direction
 FactoryManager = class()
 FactoryManager.FACTORIES = {}
-FactoryManager.FACTORIES.small_power_plant = require('objects/factories/power-plant')
-FactoryManager.FACTORIES.small_factory = require('objects/factories/small-factory')
-FactoryManager.VALID_ENTRY_DIRS = { [dirs.north] = true }
+FactoryManager.FACTORIES["small-factory"] = require('objects/factories/small-factory')
+FactoryManager.FACTORIES["medium-factory"] = require('objects/factories/medium-factory')
+FactoryManager.FACTORIES["large-factory"] = require('objects/factories/large-factory')
+FactoryManager.FACTORIES["huge-factory"] = require('objects/factories/huge-factory')
+FactoryManager.FACTORIES["small-power-plant"] = require('objects/factories/small-power-plant')
+FactoryManager.FACTORIES["medium-power-plant"] = require('objects/factories/medium-power-plant')
+FactoryManager.FACTORIES["large-power-plant"] = require('objects/factories/large-power-plant')
+FactoryManager.FACTORIES["huge-power-plant"] = require('objects/factories/huge-power-plant')
+
 FactoryManager.POLLUTION_T = 60
 
 function FactoryManager:new()
@@ -77,6 +83,8 @@ function FactoryManager:_on_build(event)
     local entity = event.created_entity
     local impl = self:_get_impl(entity.name)
     if impl then
+		entity.rotatable = false
+		entity.operable = false
         local player = game.players[event.player_index]
         if table.is_empty(self._inactive_rooms) then
             return self:_create_factory(impl, entity)
@@ -149,12 +157,21 @@ end
 
 function FactoryManager:_check_should_player_enter_factory(player, ppos)
     local args = {}
-    args.area = {{ppos.x - 0.2, ppos.y - 0.3}, {ppos.x + 0.2, ppos.y}}
+    args.area = {{ppos.x - 0.3, ppos.y - 0.3}, {ppos.x + 0.3, ppos.y + 0.3}}
     for _, entity in pairs(player.surface.find_entities_filtered(args)) do
         local factory = self:_get_factory(entity.unit_number)
         if factory and factory:force() == player.force then
-            local distance = math.abs(entity.position.x - ppos.x)
-            if distance < 0.6 and self.VALID_ENTRY_DIRS[player.character.direction] then
+			local at_entrance = false
+			if entity.direction == dirs.north then
+				at_entrance = entity.position.y < player.position.y and math.abs(entity.position.x - player.position.x) < 0.6
+			elseif entity.direction == dirs.south then
+				at_entrance = entity.position.y > player.position.y and math.abs(entity.position.x - player.position.x) < 0.6
+			elseif entity.direction == dirs.east then
+				at_entrance = entity.position.x > player.position.x and math.abs(entity.position.y - player.position.y) < 0.6
+			elseif entity.direction == dirs.west then
+				at_entrance = entity.position.x < player.position.x and math.abs(entity.position.y - player.position.y) < 0.6
+			end -- should never be a non-cardinal direction
+			if at_entrance then -- checking player direction is a nice idea, but always seems to return north, so not actually useful
                 factory:move_player_inside(player)
                 return true
             end
@@ -164,11 +181,11 @@ end
 
 function FactoryManager:_check_should_player_leave_factory(player, ppos)
     local args = {}
-    args.area = {{ppos.x + 2, ppos.y - 3}, {ppos.x + 6, ppos.y - 2}}
-    args.name = "factory-power-distributor"
-    local entity = player.surface.find_entities_filtered(args)
+    args.area = {{ppos.x -1, ppos.y - 1}, {ppos.x + 1, ppos.y + 1}}
+    args.name = "factory-gate"
+    local entity = player.surface.find_entities_filtered(args)[1]
     local factory = self:_get_factory_by_room(player.surface.index)
-    if #entity > 0 and factory then
+    if entity and factory then
         factory:move_player_outside(player)
         return true
     end

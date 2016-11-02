@@ -22,6 +22,19 @@ function Factory:new(args)
     end
 end
 
+
+local function index_direction(dir)
+	if dir == defines.direction.north then
+		return "north"
+	elseif dir == defines.direction.south then
+		return "south"
+	elseif dir == defines.direction.east then
+		return "east"
+	elseif dir == defines.direction.west then
+		return "west"
+	end
+end
+
 function Factory:deconstruct()
     for _,conn in pairs(self._connections) do
         conn:destroy_for_deconstruct(self._room.surface)
@@ -41,24 +54,42 @@ function Factory:force()
 end
 
 function Factory:layout_factory()
-    self._room:set_tiles(self.LAYOUT.tiles)
-    local x, y, force = self.LAYOUT.distributor_x, self.LAYOUT.distributor_y, self._entity.force
-    local distrib = self._room:create_entity("factory-power-distributor", x, y, force)
-    self._room:make_entity_permanent(distrib)
+    self._room:set_tiles(self.LAYOUT.constructor.tiles)
+	local force = self._entity.force
+	for _, coords in pairs(self.LAYOUT.constructor.distributors) do
+		local distrib = self._room:create_entity("factory-power-distributor", coords.x, coords.y, force)
+		self._room:make_entity_permanent(distrib)
+	end
+	local dir = index_direction(self._entity.direction)
+	local gate_dir = (self._entity.direction + 2) % 8
+	for _, coords in pairs(self.LAYOUT[dir].gates) do
+		local new_gate = self._room:create_entity("factory-gate", coords.x, coords.y, force, gate_dir)
+		self._room:make_entity_permanent(new_gate)
+	end
     local power = self._room:create_entity("factory-power-transferrer",
-        self.LAYOUT.provider_x, self.LAYOUT.provider_y, force)
+        self.LAYOUT.constructor.provider_x, self.LAYOUT.constructor.provider_y, force)
     self._room:make_entity_permanent(power)
-    power.electric_buffer_size = self.CONFIG.power_buffer
     self._power = power
-    self._entity.electric_buffer_size = self.CONFIG.power_buffer
-    self._inbox = self._room:create_entity("factory-chest-input", self.LAYOUT.input_chest_x,
-        self.LAYOUT.input_chest_y, force)
-    self._outbox = self._room:create_entity("factory-chest-output", self.LAYOUT.output_chest_x,
-        self.LAYOUT.output_chest_y, force)
+    self._inbox = self._room:create_entity("factory-chest-input", self.LAYOUT.constructor.input_chest_x,
+        self.LAYOUT.constructor.input_chest_y, force)
+    self._outbox = self._room:create_entity("factory-chest-output", self.LAYOUT.constructor.output_chest_x,
+        self.LAYOUT.constructor.output_chest_y, force)
 end
 
 function Factory:_reconnect_room_entities()
     self._power = self._room:find_entity("factory-power-transferrer")
+	local old_gate = self._room:find_entity("factory-gate")
+	while old_gate do
+		old_gate.destroy()
+		old_gate = self._room:find_entity("factory-gate")
+	end
+	local force = self._entity.force
+	local dir = index_direction(self._entity.direction)
+	local gate_dir = (self._entity.direction + 2) % 8
+	for _, coords in pairs(self.LAYOUT[dir].gates) do
+		local new_gate = self._room:create_entity("factory-gate", coords.x, coords.y, force, gate_dir)
+		self._room:make_entity_permanent(new_gate)
+	end
 end
 
 function Factory:move_player_inside(player)
@@ -103,12 +134,14 @@ function Factory:scan_for_connections(entity)
 end
 
 function Factory:_get_entrance()
-    return self.LAYOUT.entrance_x, self.LAYOUT.entrance_y
+	local dir = index_direction(self._entity.direction)
+    return self.LAYOUT[dir].entrance_x, self.LAYOUT[dir].entrance_y
 end
 
 function Factory:_get_exit()
+	local dir = index_direction(self._entity.direction)
     local pos = self._entity.position
-    return pos.x + self.LAYOUT.exit_x, pos.y + self.LAYOUT.exit_y
+    return pos.x + self.LAYOUT[dir].exit_x, pos.y + self.LAYOUT[dir].exit_y
 end
 
 function Factory:_transfer_power(source, dest)

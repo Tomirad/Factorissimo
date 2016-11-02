@@ -24,7 +24,7 @@ config.factory = { --Generic settings for all kinds of Factory.
     -- How much power any kind of factory can store
     -- Note: If this value is set too small relative to the power limits,
     -- then this will lower the effective power limits.
-    power_buffer = 10 * MJ,
+    power_buffer = "10MJ",
     -- How much of the power sent into any factory arrives inside
     -- 1 means lossless transfer, 0 means no power arrives inside at all.
     power_multiplier = 1.0,
@@ -49,10 +49,16 @@ config.factory = { --Generic settings for all kinds of Factory.
     -- them. To be able to enter such interior factories again, mine them
     -- and place them back down in the overworld.
     recursion = config.constants.ANY_FACTORY_IN_FACTORY,
+	-- Maximum Factory Tier.
+	-- 0: Small (6X6) only
+	-- 1: Small and medium (12X12)
+	-- 2: Small, medium, and large (18X18)
+	-- 3: All (up to 24X24)
+	maximum_tier = 3
 }
 config.small_power_plant = { --currently just known as "power plant"
     -- How much power can leave a power plant
-    power_limit = 500 * MW,
+    power_limit = "500MW",
     -- How much of the power produced in a power plant arrives outside
     -- 1 means lossless transfer, 0 means no power arrives outside at all.
     power_multiplier = 1.0,
@@ -61,11 +67,56 @@ config.small_power_plant = { --currently just known as "power plant"
 }
 config.small_factory = { --currently just known as "factory"
     --How much power can enter a factory
-    power_limit = 50 * MW,
+    power_limit = "50MW",
+}
+config.medium_power_plant = { --currently just known as "power plant"
+    -- How much power can leave a power plant
+    power_limit = "500MW",
+    -- How much of the power produced in a power plant arrives outside
+    -- 1 means lossless transfer, 0 means no power arrives outside at all.
+    power_multiplier = 1.0,
+    -- Same deal as above.
+    time = config.constants.ALWAYS_NIGHT,
+}
+config.medium_factory = { --currently just known as "factory"
+    --How much power can enter a factory
+    power_limit = "50MW",
+}
+config.large_power_plant = { --currently just known as "power plant"
+    -- How much power can leave a power plant
+    power_limit = "500MW",
+    -- How much of the power produced in a power plant arrives outside
+    -- 1 means lossless transfer, 0 means no power arrives outside at all.
+    power_multiplier = 1.0,
+    -- Same deal as above.
+    time = config.constants.ALWAYS_NIGHT,
+}
+config.large_factory = { --currently just known as "factory"
+    --How much power can enter a factory
+    power_limit = "50MW",
+}
+config.huge_power_plant = { --currently just known as "power plant"
+    -- How much power can leave a power plant
+    power_limit = "500MW",
+    -- How much of the power produced in a power plant arrives outside
+    -- 1 means lossless transfer, 0 means no power arrives outside at all.
+    power_multiplier = 1.0,
+    -- Same deal as above.
+    time = config.constants.ALWAYS_NIGHT,
+}
+config.huge_factory = { --currently just known as "factory"
+    --How much power can enter a factory
+    power_limit = "50MW",
 }
 
 --Config ends here. Don't edit anything after this line.
 
 setmetatable(config.small_factory, { __index = config.factory})
 setmetatable(config.small_power_plant, { __index = config.factory})
+setmetatable(config.medium_factory, { __index = config.factory})
+setmetatable(config.medium_power_plant, { __index = config.factory})
+setmetatable(config.large_factory, { __index = config.factory})
+setmetatable(config.large_power_plant, { __index = config.factory})
+setmetatable(config.huge_factory, { __index = config.factory})
+setmetatable(config.huge_power_plant, { __index = config.factory})
 return config
